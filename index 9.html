@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tu Cerebro No Está Roto | App Táctica</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0A192F; --bg2:#0D203C; --bg3:#112A4F; 
+    --r:#E5C158; --o:#F4E2A8; --y:#FFFFFF; --g:#8A9A86; --b:#BFA596; --v:#D4AF37; 
+    --text:#FDFBF7; --muted:#8B9BB4;
+  }
+  body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  .rainbow-text{background:linear-gradient(90deg,#FFFFFF,var(--r),var(--v));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  
+  /* ── OVERLAY LOADING ── */
+  #loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s}
+  .spinner{width:50px;height:50px;border:4px solid var(--bg3);border-top-color:var(--v);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── AUTH OVERLAY ── */
+  #auth-overlay{position:fixed;inset:0;background:var(--bg);z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+  .auth-card{width:100%;max-width:380px;background:var(--bg3);border:1px solid var(--v);border-radius:20px;padding:32px;box-shadow:0 0 40px rgba(212,175,55,0.1)}
+  .auth-logo{font-size:26px;font-weight:900;background:linear-gradient(90deg,var(--r),var(--v));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;text-align:center}
+  .auth-sub{color:var(--muted);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;text-align:center}
+  .auth-tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--bg);border-radius:10px;padding:4px}
+  .auth-tab{flex:1;padding:8px;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;transition:all .2s;background:none;color:var(--muted)}
+  .auth-tab.active{background:var(--bg3);color:var(--text)}
+  .auth-input{background:var(--bg);border:1px solid #1e3a63;border-radius:12px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:14px;padding:13px 16px;width:100%;margin-bottom:12px;outline:none;transition:border-color .2s}
+  .auth-input:focus{border-color:var(--r)}
+  .auth-input::placeholder{color:var(--muted)}
+  .btn-auth{background:linear-gradient(135deg,var(--r),var(--v));border:none;border-radius:12px;color:#0A192F;font-family:'Montserrat',sans-serif;font-weight:900;font-size:14px;padding:14px;width:100%;cursor:pointer;transition:all .2s;letter-spacing:.5px;margin-bottom:10px}
+  .btn-auth:hover{opacity:.9;transform:scale(1.02)}
+  .auth-error{color:#E27D60;font-size:12px;font-weight:700;min-height:16px;text-align:center;margin-top:4px}
+  .auth-divider{text-align:center;color:var(--muted);font-size:11px;margin:12px 0;letter-spacing:1px}
+
+  /* ── CÓDIGO DE ACCESO ── */
+  .code-section{border-top:1px solid #1e3a63;margin-top:16px;padding-top:20px}
+  .code-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(229,193,88,0.1);border:1px solid rgba(229,193,88,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--r);margin-bottom:16px;letter-spacing:1px}
+  .code-input-wrap{position:relative}
+  .code-input{background:var(--bg);border:2px solid rgba(229,193,88,0.4);border-radius:12px;color:var(--r);font-family:'Space Mono',monospace;font-size:16px;font-weight:700;padding:13px 16px;width:100%;margin-bottom:12px;outline:none;letter-spacing:3px;text-transform:uppercase;text-align:center;transition:border-color .2s}
+  .code-input:focus{border-color:var(--r)}
+  .code-input::placeholder{color:#3a5580;letter-spacing:1px;font-size:13px;font-family:'Montserrat',sans-serif;font-weight:400;text-align:center}
+
+  /* ── SAVE STATUS ── */
+  #save-status{position:fixed;bottom:20px;right:20px;background:rgba(10,25,47,0.9);border:1px solid #333;padding:8px 16px;border-radius:20px;font-size:11px;font-weight:700;color:var(--g);z-index:1000;opacity:0;transition:opacity .3s;pointer-events:none;backdrop-filter:blur(5px)}
+  #save-status.visible{opacity:1}
+
+  /* ── NAV ── */
+  nav{position:fixed;top:0;left:0;right:0;background:rgba(10,25,47,0.95);backdrop-filter:blur(12px);border-bottom:1px solid #112A4F;z-index:100;display:flex;align-items:center;gap:4px;padding:8px 12px;overflow-x:auto;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  .nav-btn{background:none;border:1px solid transparent;border-radius:20px;color:var(--muted);font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;white-space:nowrap;transition:all .2s;letter-spacing:.5px}
+  .nav-btn:hover{color:var(--text)}
+  .nav-btn.active{background:linear-gradient(135deg,var(--r),var(--v)) !important;color:#0A192F !important;font-weight:900}
+
+  /* ── PAGES ── */
+  .page{display:none;padding:70px 16px 60px;max-width:820px;margin:0 auto;animation:fadeIn .3s ease}
+  .page.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .cover{text-align:center;min-height:90vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .cover-title{font-size:clamp(36px,8vw,70px);font-weight:900;line-height:1;margin-bottom:8px}
+  .cover-sub{font-size:clamp(13px,2.5vw,20px);color:var(--muted);letter-spacing:4px;text-transform:uppercase;margin-bottom:40px}
+  .cover-input{background:var(--bg3);border:1px solid #1e3a63;border-radius:12px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:16px;padding:14px 20px;width:100%;max-width:380px;margin:8px 0;transition:border-color .2s}
+  .cover-input:focus{outline:none;border-color:var(--r)}
+  .cover-input::placeholder{color:var(--muted)}
+
+  .sec-title{font-size:30px;font-weight:900;margin-bottom:6px}
+  .sec-sub{color:var(--muted);font-size:12px;margin-bottom:28px;letter-spacing:2px;text-transform:uppercase}
+  .card{background:var(--bg3);border:1px solid #1e3a63;border-radius:16px;padding:20px;margin-bottom:16px}
+  .card-title{font-size:11px;font-weight:900;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+  .priority-box{border:2px solid;border-radius:12px;padding:16px;margin-bottom:12px;position:relative;transition:transform .15s}
+  .priority-box:hover{transform:translateX(4px)}
+  .priority-num{position:absolute;top:-12px;left:16px;font-size:10px;font-weight:900;padding:3px 10px;border-radius:20px;letter-spacing:1px;color:#0A192F}
+  .pbox-input{background:none;border:none;color:var(--text);font-family:'Montserrat',sans-serif;font-size:15px;width:100%;padding:4px 0;resize:none;height:28px}
+  .pbox-input:focus{outline:none}
+
+  .energy-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .e-dot{width:38px;height:38px;border-radius:50%;border:2px solid #1e3a63;cursor:pointer;transition:all .2s;font-size:18px;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
+  .e-dot.active{border-color:transparent;transform:scale(1.12)}
+  .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px}
+  .day-col{background:var(--bg3);border-radius:12px;padding:10px 8px;border-top:3px solid}
+  .day-name{font-size:10px;font-weight:900;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase}
+  .day-input{background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);font-family:'Montserrat',sans-serif;font-size:11px;width:100%;padding:3px 0;margin-bottom:5px}
+  .day-input:focus{outline:none;border-bottom-color:var(--r)}
+
+  .cloud{background:var(--bg3);border:2px solid;border-radius:24px;padding:20px;margin-bottom:14px}
+  .cloud-title{font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+  .cloud-area{background:none;border:none;color:var(--text);font-family:'Montserrat',sans-serif;font-size:14px;width:100%;resize:none;min-height:90px;line-height:1.8}
+  .cloud-area:focus{outline:none}
+  .cloud-area::placeholder{color:#6c82a3}
+
+  .habit-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .habit-name{font-size:13px;font-weight:700;min-width:130px;flex-shrink:0}
+  .habit-circles{display:flex;gap:4px;flex-wrap:wrap}
+  .hc{width:22px;height:22px;border-radius:50%;border:2px solid #1e3a63;cursor:pointer;transition:all .15s}
+  .hc.done{border-color:transparent}
+
+  .mood-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .mood-cell{aspect-ratio:1;border-radius:8px;border:1px solid #1e3a63;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text)}
+  .mood-picker{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .mood-opt{padding:8px 16px;border-radius:20px;border:2px solid transparent;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;opacity:.7;transition:all .2s}
+  .mood-opt:hover,.mood-opt.selected{opacity:1;transform:scale(1.05)}
+
+  .pomo-timer{text-align:center;padding:28px 0}
+  .timer-ring{width:190px;height:190px;position:relative;margin:0 auto 22px;cursor:pointer}
+  .timer-ring svg{transform:rotate(-90deg)}
+  .timer-ring circle{fill:none;stroke-width:9;transition:stroke-dashoffset .5s linear}
+  .timer-display{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+  .timer-num{font-size:42px;font-weight:900;font-family:'Space Mono',monospace}
+  .timer-label{font-size:11px;color:var(--muted);letter-spacing:2px;margin-top:2px}
+  .pomo-btn{border:none;border-radius:20px;padding:12px 28px;font-family:'Montserrat',sans-serif;font-weight:900;font-size:14px;cursor:pointer;transition:all .2s;letter-spacing:1px;margin:4px}
+  .pomo-btn:hover{transform:scale(1.04)}
+
+  .goal-main{border:2px solid var(--v);border-radius:16px;padding:20px;margin-bottom:20px}
+  .goal-mini{border:1px solid #1e3a63;border-radius:12px;padding:16px;margin-bottom:10px;margin-left:20px;border-left:3px solid}
+  .goal-step{background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:6px;margin-left:40px;font-size:13px;display:flex;align-items:center;gap:10px}
+  .step-check{width:18px;height:18px;border-radius:4px;border:2px solid #1e3a63;cursor:pointer;flex-shrink:0;transition:all .2s}
+  .step-check.done{background:var(--g);border-color:var(--g)}
+
+  .reward-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .reward-card{background:var(--bg3);border:1px solid #1e3a63;border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+  .reward-card:hover{transform:translateY(-5px);border-color:var(--r);box-shadow:0 8px 24px rgba(229,193,88,0.15)}
+  .reward-card.premium{border-color:rgba(212,175,55,0.4);background:linear-gradient(135deg,var(--bg3),rgba(212,175,55,0.05))}
+  .reward-card.premium::before{content:'⭐';position:absolute;top:6px;right:8px;font-size:10px}
+  .reward-claimed{position:absolute;inset:0;background:rgba(229,193,88,.12);display:none;align-items:center;justify-content:center;font-size:36px}
+  .reward-card.claimed .reward-claimed{display:flex}
+  .reward-card.locked{opacity:.5;cursor:not-allowed}
+  .reward-card.locked:hover{transform:none;box-shadow:none}
+  .reward-icon{font-size:30px;margin-bottom:8px;transition:transform .2s}
+  .reward-card:hover .reward-icon{transform:scale(1.15)}
+  .reward-name{font-size:12px;font-weight:700}
+  .reward-pts{font-size:11px;color:var(--muted);margin-top:4px}
+  .reward-lock{font-size:10px;color:#E27D60;margin-top:4px;font-weight:700}
+  .badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:20px}
+  .badge-card{background:var(--bg3);border:1px solid #1e3a63;border-radius:14px;padding:14px;text-align:center;transition:all .2s}
+  .badge-card.unlocked{border-color:var(--v);box-shadow:0 0 16px rgba(212,175,55,0.2)}
+  .badge-card.locked-badge{opacity:.4;filter:grayscale(1)}
+  .badge-icon{font-size:28px;margin-bottom:6px}
+  .badge-name{font-size:11px;font-weight:700;color:var(--text)}
+  .badge-desc{font-size:10px;color:var(--muted);margin-top:3px}
+  .challenge-card{background:linear-gradient(135deg,rgba(229,193,88,0.08),rgba(212,175,55,0.03));border:1px solid rgba(229,193,88,0.3);border-radius:16px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+  .challenge-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--r),var(--v))}
+  .challenge-title{font-size:11px;font-weight:900;color:var(--r);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+  .challenge-desc{font-size:14px;font-weight:700;margin-bottom:12px}
+  .challenge-prog{background:var(--bg);border-radius:20px;height:10px;overflow:hidden;margin-bottom:8px}
+  .challenge-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--r),var(--v));transition:width .6s ease}
+  .challenge-pts{font-size:12px;color:var(--v);font-weight:700}
+  .confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;animation:confettiFall 2.5s ease-in forwards;pointer-events:none;z-index:9999}
+  @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+  .floating-pts{position:fixed;font-size:20px;font-weight:900;color:var(--r);pointer-events:none;z-index:9999;animation:floatUp 1.5s ease-out forwards}
+  @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(1.3)}}
+  #levelup-overlay{position:fixed;inset:0;background:rgba(10,25,47,0.92);z-index:9990;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .levelup-card{background:var(--bg3);border:2px solid var(--v);border-radius:24px;padding:40px;max-width:320px;animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes popIn{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
+  .streak-display{display:flex;align-items:center;gap:10px;background:rgba(229,193,88,0.08);border:1px solid rgba(229,193,88,0.2);border-radius:12px;padding:12px 16px;margin-bottom:16px}
+  .streak-fire{font-size:28px;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+
+  .reflect-q{margin-bottom:22px}
+  .reflect-q label{display:block;font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+  .reflect-q textarea{background:var(--bg3);border:1px solid #1e3a63;border-radius:10px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:14px;width:100%;padding:14px;resize:none;min-height:88px;line-height:1.7;transition:border-color .2s}
+  .reflect-q textarea:focus{outline:none;border-color:var(--r)}
+  .prog-bar{background:var(--bg);border-radius:20px;height:8px;overflow:hidden;margin-top:8px}
+  .prog-fill{height:100%;border-radius:20px;transition:width .6s ease}
+
+  .grat-entry{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .grat-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
+  .grat-input{background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);font-family:'Montserrat',sans-serif;font-size:14px;width:100%;padding:6px 0;transition:border-color .2s}
+  .grat-input:focus{outline:none;border-bottom-color:var(--r)}
+
+  .notes-area{background:none;border:none;color:var(--text);font-family:'Montserrat',sans-serif;font-size:15px;line-height:2.4;width:100%;resize:none;min-height:500px}
+  .notes-lines{background-image:repeating-linear-gradient(transparent,transparent 37px,#1e3a63 37px,#1e3a63 38px);padding:8px 0}
+  .notes-area:focus{outline:none}
+
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px}
+  .cal-header{text-align:center;font-size:10px;font-weight:900;letter-spacing:1px;color:var(--muted);padding:6px 0;text-transform:uppercase}
+  .cal-day{aspect-ratio:1;border-radius:8px;border:1px solid #1e3a63;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+  .cal-day:hover{border-color:var(--r);background:var(--bg3)}
+  .cal-day.today{border-color:var(--r);color:var(--r)}
+
+  .energy-bar-grid{display:flex;gap:8px;align-items:flex-end;height:160px;padding:0 4px}
+  .e-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .e-bar{width:100%;border-radius:8px 8px 0 0;cursor:pointer;transition:height .4s ease,background .3s;min-height:8px}
+
+  .selfcare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .sc-card{background:var(--bg3);border:1px solid #1e3a63;border-radius:14px;padding:16px;cursor:pointer;transition:all .2s;text-align:center}
+  .sc-card:hover{transform:translateY(-2px)}
+  .sc-card.done{border-color:var(--g);background:rgba(138,154,134,0.1)}
+  .sc-icon{font-size:32px;margin-bottom:8px}
+  .sc-name{font-size:13px;font-weight:700}
+  .sc-streak{font-size:11px;color:var(--muted);margin-top:4px}
+
+  input[type=number],select{background:var(--bg3);border:1px solid #1e3a63;border-radius:8px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:14px;padding:8px 12px}
+  input:focus,select:focus{outline:none;border-color:var(--r)}
+
+  .btn-rainbow{background:linear-gradient(135deg,var(--r),var(--v));border:none;border-radius:10px;color:#0A192F;font-family:'Montserrat',sans-serif;font-weight:900;font-size:13px;padding:10px 20px;cursor:pointer;transition:all .2s;letter-spacing:.5px}
+  .btn-rainbow:hover{transform:scale(1.03);opacity:.9}
+  .btn-ghost{background:none;border:1px solid #1e3a63;border-radius:10px;color:var(--muted);font-family:'Montserrat',sans-serif;font-size:13px;padding:10px 18px;cursor:pointer;transition:all .2s}
+  .btn-ghost:hover{border-color:var(--r);color:var(--text)}
+
+  @media(max-width:600px){.week-grid{grid-template-columns:repeat(4,1fr)}.day-col:nth-child(n+5){display:none}.reward-grid{grid-template-columns:repeat(3,1fr)}}
+
+  /* ── ONBOARDING ── */
+  #onboarding-overlay{position:fixed;inset:0;background:var(--bg);z-index:9997;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+  .ob-card{width:100%;max-width:420px;text-align:center;animation:fadeIn .4s ease}
+  .ob-step-dots{display:flex;gap:8px;justify-content:center;margin-bottom:32px}
+  .ob-dot{width:8px;height:8px;border-radius:50%;background:#1e3a63;transition:all .3s}
+  .ob-dot.active{background:var(--r);width:24px;border-radius:4px}
+  .ob-emoji{font-size:72px;margin-bottom:20px;display:block;animation:bounce .6s ease}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .ob-title{font-size:clamp(24px,5vw,36px);font-weight:900;margin-bottom:12px;line-height:1.2}
+  .ob-desc{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:32px;max-width:340px;margin-left:auto;margin-right:auto}
+  .ob-input{background:var(--bg3);border:2px solid #1e3a63;border-radius:14px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:18px;font-weight:700;padding:16px 20px;width:100%;margin-bottom:24px;outline:none;text-align:center;transition:border-color .2s}
+  .ob-input:focus{border-color:var(--r)}
+  .ob-input::placeholder{color:var(--muted);font-weight:400;font-size:15px}
+  .ob-btn{background:linear-gradient(135deg,var(--r),var(--v));border:none;border-radius:14px;color:#0A192F;font-family:'Montserrat',sans-serif;font-weight:900;font-size:16px;padding:16px 40px;cursor:pointer;transition:all .2s;letter-spacing:.5px;width:100%;margin-bottom:12px}
+  .ob-btn:hover{transform:scale(1.02);opacity:.9}
+  .ob-skip{background:none;border:none;color:var(--muted);font-family:'Montserrat',sans-serif;font-size:13px;cursor:pointer;text-decoration:underline}
+  .ob-features{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;text-align:left}
+  .ob-feature{background:var(--bg3);border:1px solid #1e3a63;border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px}
+  .ob-feature-icon{font-size:22px;flex-shrink:0}
+  .ob-feature-text{font-size:12px;font-weight:700;color:var(--text)}
+  .ob-quote{background:linear-gradient(135deg,rgba(229,193,88,0.08),rgba(212,175,55,0.03));border:1px solid rgba(229,193,88,0.2);border-radius:16px;padding:20px;margin-bottom:28px;font-size:15px;font-style:italic;color:var(--text);line-height:1.7}
+  .ob-quote-author{font-size:11px;color:var(--muted);margin-top:8px;font-style:normal;font-weight:700}
+
+  /* ── MODO EMERGENCIA TDAH ── */
+  #emergency-btn{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#E27D60,#c0392b);border:none;cursor:pointer;font-size:26px;z-index:800;box-shadow:0 4px 20px rgba(226,125,96,0.5);transition:all .2s;display:none}
+  #emergency-btn:hover{transform:scale(1.1)}
+  #emergency-btn.pulse{animation:emergencyPulse 2s infinite}
+  @keyframes emergencyPulse{0%,100%{box-shadow:0 4px 20px rgba(226,125,96,0.5)}50%{box-shadow:0 4px 32px rgba(226,125,96,0.9),0 0 0 8px rgba(226,125,96,0.2)}}
+  #emergency-overlay{position:fixed;inset:0;background:rgba(10,25,47,0.97);z-index:9500;display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:32px 24px;text-align:center;overflow-y:auto}
+  .em-title{font-size:28px;font-weight:900;margin-bottom:8px;color:#FDFBF7}
+  .em-sub{font-size:14px;color:var(--muted);margin-bottom:32px;letter-spacing:1px}
+  .em-step{background:var(--bg3);border-radius:16px;padding:20px 24px;margin-bottom:12px;width:100%;max-width:400px;display:flex;align-items:flex-start;gap:16px;text-align:left;border-left:4px solid;opacity:0;transform:translateY(20px);transition:all .4s ease}
+  .em-step.show{opacity:1;transform:translateY(0)}
+  .em-step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0;color:#0A192F}
+  .em-step-content h4{font-size:14px;font-weight:900;margin-bottom:4px}
+  .em-step-content p{font-size:13px;color:var(--muted);line-height:1.5}
+  .em-breathe{width:80px;height:80px;border-radius:50%;background:rgba(229,193,88,0.15);border:2px solid var(--r);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:32px;cursor:pointer}
+  .em-breathe.breathing{animation:breathe 8s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:scale(1);background:rgba(229,193,88,0.15)}50%{transform:scale(1.3);background:rgba(229,193,88,0.3)}}
+  .em-close{background:none;border:1px solid #1e3a63;border-radius:12px;color:var(--muted);font-family:'Montserrat',sans-serif;font-size:13px;padding:10px 24px;cursor:pointer;margin-top:16px;transition:all .2s}
+  .em-close:hover{border-color:var(--r);color:var(--text)}
+  #frase-overlay{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid rgba(229,193,88,0.3);border-radius:16px;padding:14px 20px;max-width:340px;width:90%;z-index:500;animation:slideUp .4s ease;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+  @keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+  .frase-text{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:6px}
+  .frase-close{position:absolute;top:8px;right:12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <h2 class="rainbow-text" style="font-weight:900;letter-spacing:2px">INICIANDO...</h2>
+  <p style="color:var(--muted);font-size:12px;margin-top:8px">Preparando tu espacio</p>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onboarding-overlay">
+  <div class="ob-card" id="obCard">
+
+    <!-- PASO 1 -->
+    <div id="ob-step-1">
+      <div class="ob-step-dots">
+        <div class="ob-dot active"></div>
+        <div class="ob-dot"></div>
+        <div class="ob-dot"></div>
+        <div class="ob-dot"></div>
+      </div>
+      <span class="ob-emoji">🧠</span>
+      <h2 class="ob-title rainbow-text">Tu cerebro no<br>está roto</h2>
+      <p class="ob-desc">Kintsugi Focus es tu espacio seguro para organizar tu mente, celebrar tus logros y vivir con más calma — diseñado especialmente para cerebros que funcionan diferente.</p>
+      <button class="ob-btn" onclick="obNext(2)">Quiero conocerla ✨</button>
+      <button class="ob-skip" onclick="finishOnboarding()">Ya conozco la app, entrar</button>
+    </div>
+
+    <!-- PASO 2 -->
+    <div id="ob-step-2" style="display:none">
+      <div class="ob-step-dots">
+        <div class="ob-dot"></div>
+        <div class="ob-dot active"></div>
+        <div class="ob-dot"></div>
+        <div class="ob-dot"></div>
+      </div>
+      <span class="ob-emoji">✨</span>
+      <h2 class="ob-title rainbow-text">¿Cómo te<br>llamas?</h2>
+      <p class="ob-desc">Tu espacio personal te está esperando. Este será tu nombre en la app.</p>
+      <input class="ob-input" type="text" id="obName" placeholder="Escribe tu nombre aquí..." maxlength="30">
+      <button class="ob-btn" onclick="obSaveName()">¡Ese soy yo! 🙌</button>
+    </div>
+
+    <!-- PASO 3 -->
+    <div id="ob-step-3" style="display:none">
+      <div class="ob-step-dots">
+        <div class="ob-dot"></div>
+        <div class="ob-dot"></div>
+        <div class="ob-dot active"></div>
+        <div class="ob-dot"></div>
+      </div>
+      <span class="ob-emoji">🗺️</span>
+      <h2 class="ob-title rainbow-text">Todo lo que<br>necesitas</h2>
+      <div class="ob-features">
+        <div class="ob-feature"><span class="ob-feature-icon">📅</span><span class="ob-feature-text">Planificador diario, semanal y mensual</span></div>
+        <div class="ob-feature"><span class="ob-feature-icon">✅</span><span class="ob-feature-text">Tracker de hábitos con rachas</span></div>
+        <div class="ob-feature"><span class="ob-feature-icon">🍅</span><span class="ob-feature-text">Pomodoro para sesiones de foco</span></div>
+        <div class="ob-feature"><span class="ob-feature-icon">🏆</span><span class="ob-feature-text">Recompensas y sistema de puntos</span></div>
+        <div class="ob-feature"><span class="ob-feature-icon">💜</span><span class="ob-feature-text">Tracker de humor y energía</span></div>
+        <div class="ob-feature"><span class="ob-feature-icon">🧠</span><span class="ob-feature-text">Brain dump para vaciar la mente</span></div>
+      </div>
+      <button class="ob-btn" onclick="obNext(4)">¡Qué completa! Siguiente 🚀</button>
+    </div>
+
+    <!-- PASO 4 -->
+    <div id="ob-step-4" style="display:none">
+      <div class="ob-step-dots">
+        <div class="ob-dot"></div>
+        <div class="ob-dot"></div>
+        <div class="ob-dot"></div>
+        <div class="ob-dot active"></div>
+      </div>
+      <span class="ob-emoji">💛</span>
+      <h2 class="ob-title rainbow-text" id="obWelcomeTitle">¡Bienvenida!</h2>
+      <div class="ob-quote">
+        "El arte Kintsugi repara lo roto con oro. Tu cerebro diferente no es un defecto — es tu mayor fortaleza."
+        <div class="ob-quote-author">— Filosofía Kintsugi Focus</div>
+      </div>
+      <p class="ob-desc" style="margin-bottom:20px">Recuerda: el progreso, no la perfección. Un día a la vez. 💙</p>
+      <button class="ob-btn" onclick="finishOnboarding()">¡Empezar mi journey! 🌟</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- FRASE MOTIVACIONAL -->
+<div id="frase-overlay" style="display:none">
+  <button class="frase-close" onclick="document.getElementById('frase-overlay').style.display='none'">✕</button>
+  <div class="frase-text" id="fraseText"></div>
+  <div style="font-size:11px;color:var(--muted);margin-top:4px">💜 Para cerebros que funcionan diferente</div>
+</div>
+
+<!-- AUTH OVERLAY (login + registro + código) -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">KINTSUGI FOCUS</div>
+    <div class="auth-sub">Tu cerebro no está roto · App táctica</div>
+
+    <!-- TABS -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Iniciar sesión</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Crear cuenta</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="panelLogin">
+      <input class="auth-input" type="email" id="loginEmail" placeholder="Tu correo electrónico">
+      <input class="auth-input" type="password" id="loginPass" placeholder="Contraseña">
+      <button class="btn-auth" onclick="loginUser()">INICIAR SESIÓN</button>
+    </div>
+
+    <!-- REGISTRO -->
+    <div id="panelRegister" style="display:none">
+      <input class="auth-input" type="email" id="regEmail" placeholder="Tu correo electrónico">
+      <input class="auth-input" type="password" id="regPass" placeholder="Contraseña (mínimo 6 caracteres)">
+
+      <!-- SECCIÓN CÓDIGO DE ACCESO -->
+      <div class="code-section">
+        <div class="code-badge">🔑 CÓDIGO DE ACCESO REQUERIDO</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">Ingresa el código que recibiste al comprar el paquete Kintsugi Focus.</p>
+        <input class="code-input" type="text" id="accessCode" placeholder="KF-XXXX-XXXX" maxlength="12" oninput="formatCode(this)">
+      </div>
+
+      <button class="btn-auth" onclick="registerUser()">ACTIVAR MI CUENTA</button>
+    </div>
+
+    <p class="auth-error" id="authError"></p>
+
+    <div class="auth-divider">— o —</div>
+    <p style="font-size:11px;color:var(--muted);text-align:center">¿Aún no tienes acceso? <a href="https://hotmart.com" target="_blank" style="color:var(--r);font-weight:700;text-decoration:none">Consigue el paquete aquí →</a></p>
+  </div>
+</div>
+
+<!-- SAVE STATUS -->
+<div id="save-status">✓ Guardado</div>
+
+<!-- NAV -->
+<nav id="mainNav" style="display:none">
+  <button class="nav-btn active" onclick="showPage('portada',this)">🌟 Inicio</button>
+  <button class="nav-btn" onclick="showPage('dashboard',this)">📊 Dashboard</button>
+  <button class="nav-btn" onclick="showPage('monthly',this)">📆 Mes</button>
+  <button class="nav-btn" onclick="showPage('weekly',this)">🗓 Semana</button>
+  <button class="nav-btn" onclick="showPage('daily',this)">📅 Hoy</button>
+  <button class="nav-btn" onclick="showPage('brain',this)">🧠 Brain Dump</button>
+  <button class="nav-btn" onclick="showPage('habits',this)">✅ Hábitos</button>
+  <button class="nav-btn" onclick="showPage('mood',this)">💜 Humor</button>
+  <button class="nav-btn" onclick="showPage('energy',this)">⚡ Energía</button>
+  <button class="nav-btn" onclick="showPage('selfcare',this)">🌿 Autocuidado</button>
+  <button class="nav-btn" onclick="showPage('pomo',this)">🍅 Pomodoro</button>
+  <button class="nav-btn" onclick="showPage('goals',this)">🎯 Metas</button>
+  <button class="nav-btn" onclick="showPage('rewards',this)">🏆 Recompensas</button>
+  <button class="nav-btn" onclick="showPage('reflect',this)">🔮 Reflexión</button>
+  <button class="nav-btn" onclick="showPage('gratitude',this)">🌸 Gratitud</button>
+  <button class="nav-btn" onclick="showPage('notes',this)">📝 Notas</button>
+  <button class="nav-btn" onclick="showPage('stats',this);renderStats()">📈 Estadísticas</button>
+  <button class="nav-btn" onclick="logoutUser()" style="margin-left:10px">🚪 Salir</button>
+</nav>
+
+<!-- BOTÓN EMERGENCIA -->
+<button id="emergency-btn" class="pulse" onclick="openEmergency()" title="Modo Emergencia TDAH">🆘</button>
+
+<!-- OVERLAY EMERGENCIA -->
+<div id="emergency-overlay">
+  <div style="max-width:400px;width:100%">
+    <div class="em-breathe" id="emBreath" onclick="toggleBreath()" title="Toca para respirar">🫁</div>
+    <div id="breathText" style="font-size:13px;color:var(--muted);margin-top:-16px;margin-bottom:20px;min-height:20px;letter-spacing:1px;text-transform:uppercase;font-weight:700"></div>
+    <h2 class="em-title">Hey. Estás bien. 💙</h2>
+    <p class="em-sub">Tu cerebro está saturado. Eso es normal.<br>Sigue estos 3 pasos:</p>
+
+    <div class="em-step" id="em1" style="border-left-color:#E5C158">
+      <div class="em-step-num" style="background:#E5C158">1</div>
+      <div class="em-step-content">
+        <h4>Respira con el círculo ☝️</h4>
+        <p>Toca el círculo de arriba. Inhala cuando crece, exhala cuando se reduce. Hazlo 3 veces.</p>
+      </div>
+    </div>
+
+    <div class="em-step" id="em2" style="border-left-color:#8A9A86">
+      <div class="em-step-num" style="background:#8A9A86">2</div>
+      <div class="em-step-content">
+        <h4>Nombra 5 cosas que ves 👀</h4>
+        <p>Mira a tu alrededor. Di en voz alta 5 cosas que puedes ver ahora mismo. Ancla tu mente al presente.</p>
+      </div>
+    </div>
+
+    <div class="em-step" id="em3" style="border-left-color:#BFA596">
+      <div class="em-step-num" style="background:#BFA596">3</div>
+      <div class="em-step-content">
+        <h4>Elige UNA sola cosa 🎯</h4>
+        <p>No la lista entera. Solo la cosa más pequeña y concreta que puedes hacer en los próximos 5 minutos.</p>
+      </div>
+    </div>
+
+    <div style="background:rgba(229,193,88,0.08);border:1px solid rgba(229,193,88,0.2);border-radius:12px;padding:14px;margin-top:16px;font-size:13px;color:var(--muted);line-height:1.6">
+      💜 <strong style="color:var(--text)">Recuerda:</strong> No tienes que hacer todo hoy. Solo el siguiente paso más pequeño.
+    </div>
+
+    <button class="em-close" onclick="closeEmergency()">Ya me siento mejor ✨</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ PÁGINAS ═══════════════════════════════════════ -->
+
+<div class="page active" id="page-portada">
+  <div class="cover">
+    <div style="margin-bottom:20px;display:flex;justify-content:center">
+      <svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 100 100" style="filter:drop-shadow(0 0 12px rgba(229,193,88,0.3))">
+        <path d="M50 15 C25 10, 10 30, 15 50 C10 70, 30 85, 45 80 C50 95, 65 90, 70 80 C90 85, 95 65, 85 50 C95 30, 75 10, 50 15 Z" fill="#0A0A0A" stroke="var(--v)" stroke-width="1"/>
+        <path d="M50 15 L48 35 L28 42 M48 35 L65 52 L83 48 M65 52 L55 78 M15 50 L35 55 L48 35 M85 50 L70 65 L65 52 M35 55 L45 80" stroke="var(--r)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1 class="cover-title rainbow-text">KINTSUGI<br>FOCUS</h1>
+    <p class="cover-sub">Tu cerebro no está roto · App Táctica</p>
+    <input class="cover-input" type="text" placeholder="✨ Tu nombre aquí" id="userName" oninput="updateName(this.value)">
+    <input class="cover-input" type="text" id="userMantra" placeholder="🌟 Tu mantra de sanación...">
+    <div style="margin-top:36px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+      <div style="background:var(--bg3);border-radius:12px;padding:14px 22px;text-align:center;border:1px solid #1e3a63"><div style="font-size:26px;font-weight:900" class="rainbow-text">365</div><div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:2px">DÍAS POR VIVIR</div></div>
+      <div style="background:var(--bg3);border-radius:12px;padding:14px 22px;text-align:center;border:1px solid #1e3a63"><div style="font-size:26px;font-weight:900;color:var(--g)">3</div><div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:2px">PRIORIDADES MAX</div></div>
+      <div style="background:var(--bg3);border-radius:12px;padding:14px 22px;text-align:center;border:1px solid #1e3a63"><div style="font-size:26px;font-weight:900;color:var(--b)">∞</div><div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:2px">POSIBILIDADES</div></div>
+      <div style="background:var(--bg3);border-radius:12px;padding:14px 22px;text-align:center;border:1px solid #1e3a63"><div style="font-size:26px;font-weight:900;color:var(--y)" id="coverPts">0</div><div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:2px">TUS PUNTOS</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-dashboard">
+  <h2 class="sec-title rainbow-text">Dashboard 2026</h2><p class="sec-sub">Vista general de tu año</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px">
+    <div class="card" style="border-top:3px solid var(--r)"><div class="card-title">🌟 Top 3 del Año</div><div style="display:flex;flex-direction:column;gap:8px"><input id="dash_goal_1" type="text" placeholder="Meta anual #1..." style="background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);font-family:'Montserrat',sans-serif;font-size:14px;padding:6px 0"><input id="dash_goal_2" type="text" placeholder="Meta anual #2..." style="background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);font-family:'Montserrat',sans-serif;font-size:14px;padding:6px 0"><input id="dash_goal_3" type="text" placeholder="Meta anual #3..." style="background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);font-family:'Montserrat',sans-serif;font-size:14px;padding:6px 0"></div></div>
+    <div class="card" style="border-top:3px solid var(--b)"><div class="card-title">📈 Progreso Mensual</div><div id="dashProgress"></div></div>
+    <div class="card" style="border-top:3px solid var(--g)"><div class="card-title">📅 Próximos Eventos</div><div id="dashEvents"></div><input type="text" id="newEvent" placeholder="Agregar evento..." style="background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);font-family:'Montserrat',sans-serif;font-size:13px;width:100%;padding:6px 0;margin-top:10px"><button onclick="addEvent()" style="margin-top:8px;font-size:11px" class="btn-rainbow">+ Agregar</button></div>
+  </div>
+  <div class="card"><div class="card-title">⚡ Brain Dump Rápido</div><textarea id="dash_brain_dump" placeholder="Lo que tengo en la cabeza ahora..." style="background:none;border:none;color:var(--text);font-family:'Montserrat',sans-serif;font-size:14px;width:100%;resize:none;min-height:80px;line-height:1.7"></textarea></div>
+</div>
+
+<div class="page" id="page-monthly">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><h2 class="sec-title rainbow-text" id="monthTitle">Marzo 2026</h2><div style="display:flex;gap:8px"><button onclick="changeMonth(-1)" class="btn-ghost" style="padding:6px 14px">◀</button><button onclick="changeMonth(1)" class="btn-ghost" style="padding:6px 14px">▶</button></div></div>
+  <p class="sec-sub" id="monthSub"></p>
+  <div class="cal-grid" id="calHeaders"></div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="card"><div class="card-title">🎯 3 Metas del Mes</div><div class="priority-box" style="border-color:var(--r)"><span class="priority-num" style="background:var(--r)">#1</span><input id="month_goal_1" class="pbox-input" type="text" placeholder="Meta principal..."></div><div class="priority-box" style="border-color:var(--o)"><span class="priority-num" style="background:var(--o)">#2</span><input id="month_goal_2" class="pbox-input" type="text" placeholder="Segunda meta..."></div><div class="priority-box" style="border-color:var(--b)"><span class="priority-num" style="background:var(--b)">#3</span><input id="month_goal_3" class="pbox-input" type="text" placeholder="Bonus..."></div></div>
+  <div class="card"><div class="card-title">📝 Notas del Mes</div><textarea id="month_notes" class="cloud-area"></textarea></div>
+</div>
+
+<div class="page" id="page-weekly">
+  <h2 class="sec-title rainbow-text">Kintsugi Week</h2><p class="sec-sub" id="weekLabel">Semana actual</p>
+  <div class="week-grid" id="weekGrid"></div>
+  <div class="card"><div class="card-title">🎯 3 Metas de la Semana</div><div class="priority-box" style="border-color:var(--v)"><span class="priority-num" style="background:var(--v)">#1</span><input id="week_goal_1" class="pbox-input" type="text"></div><div class="priority-box" style="border-color:var(--b)"><span class="priority-num" style="background:var(--b)">#2</span><input id="week_goal_2" class="pbox-input" type="text"></div><div class="priority-box" style="border-color:var(--g)"><span class="priority-num" style="background:var(--g)">#3</span><input id="week_goal_3" class="pbox-input" type="text"></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="card"><div class="card-title">⚡ Energía Promedio</div><div class="energy-row" id="weekEnergyDots"></div></div><div class="card"><div class="card-title">🎁 Recompensa Semanal</div><input id="week_reward" type="text" style="background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);width:100%;padding:8px 0"></div></div>
+</div>
+
+<div class="page" id="page-daily">
+  <h2 class="sec-title rainbow-text">Focus Day</h2><p class="sec-sub" id="todayDate">Hoy</p>
+  <div class="card"><div class="card-title">⏰ Despertar + Mantra</div><div style="display:flex;gap:12px;flex-wrap:wrap"><input id="daily_wake" type="time" style="background:var(--bg);border:1px solid #1e3a63;border-radius:8px;color:var(--text);padding:8px 12px"><input id="daily_mantra" type="text" placeholder="Mi mantra del día..." style="background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);flex:1;padding:8px 0"></div></div>
+  <div class="card"><div class="card-title">🌟 Mis 3 Prioridades</div><div class="priority-box" style="border-color:var(--r)"><span class="priority-num" style="background:var(--r)">#1 ESTRELLA</span><input id="daily_prio_1" class="pbox-input" type="text"></div><div class="priority-box" style="border-color:var(--o)"><span class="priority-num" style="background:var(--o)">#2 IMPORTANTE</span><input id="daily_prio_2" class="pbox-input" type="text"></div><div class="priority-box" style="border-color:var(--b)"><span class="priority-num" style="background:var(--b)">#3 SI PUEDO</span><input id="daily_prio_3" class="pbox-input" type="text"></div></div>
+  <div class="card"><div class="card-title">⏱ Time-Blocking</div><div id="timeBlocks"></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="card"><div class="card-title">💚 Energía Hoy</div><div class="energy-row" id="energyDots"></div></div><div class="card"><div class="card-title">🎁 Mi Recompensa</div><input id="daily_reward" type="text" style="background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);width:100%;padding:8px 0"></div></div>
+  <div class="card"><div class="card-title">🧠 Brain Dump Express</div><textarea id="daily_brain_dump" class="cloud-area"></textarea></div>
+  <div class="card"><div class="card-title">🌸 Gratitud del Día</div><div class="grat-entry"><div class="grat-num" style="background:var(--r);color:#0A192F">1</div><input id="daily_grat_1" class="grat-input" type="text"></div><div class="grat-entry"><div class="grat-num" style="background:var(--g);color:#0A192F">2</div><input id="daily_grat_2" class="grat-input" type="text"></div><div class="grat-entry"><div class="grat-num" style="background:var(--b);color:#0A192F">3</div><input id="daily_grat_3" class="grat-input" type="text"></div></div>
+  <div class="card"><div class="card-title">🌙 Cierre del Día</div><div style="display:flex;gap:12px;margin-bottom:12px"><span style="font-size:13px;color:var(--muted)">Energía final:</span><div class="energy-row" id="energyEnd"></div></div><textarea id="daily_close" class="cloud-area" style="min-height:36px"></textarea></div>
+</div>
+
+<div class="page" id="page-brain">
+  <h2 class="sec-title rainbow-text">Descarga Cerebral</h2><p class="sec-sub">Vacía tu mente en 2 minutos</p>
+  <div class="cloud" style="border-color:var(--r)"><div class="cloud-title" style="color:var(--r)">⚡ Tareas Pendientes</div><textarea id="brain_dump_tasks" class="cloud-area"></textarea></div>
+  <div class="cloud" style="border-color:var(--o)"><div class="cloud-title" style="color:var(--o)">💡 Ideas</div><textarea id="brain_dump_ideas" class="cloud-area"></textarea></div>
+  <div class="cloud" style="border-color:var(--b)"><div class="cloud-title" style="color:var(--b)">😰 Preocupaciones</div><textarea id="brain_dump_worries" class="cloud-area"></textarea></div>
+  <div class="cloud" style="border-color:var(--v)"><div class="cloud-title" style="color:var(--v)">🌀 Random</div><textarea id="brain_dump_random" class="cloud-area"></textarea></div>
+  <div class="cloud" style="border-color:var(--g)"><div class="cloud-title" style="color:var(--g)">🎯 Próximos Pasos</div><textarea id="brain_dump_next" class="cloud-area"></textarea></div>
+</div>
+
+<div class="page" id="page-habits">
+  <h2 class="sec-title rainbow-text">Tracker de Hábitos</h2><p class="sec-sub" id="habitMonthLabel"></p>
+  <div id="habitTracker"></div>
+  <div class="card" style="margin-top:20px"><div class="card-title">➕ Nuevo Hábito</div><div style="display:flex;gap:8px"><input type="text" id="newHabit" placeholder="Nombre del hábito..." style="background:var(--bg);border:1px solid #1e3a63;border-radius:8px;color:var(--text);flex:1;padding:10px"><button onclick="addHabit()" class="btn-rainbow">+ Agregar</button></div></div>
+</div>
+
+<div class="page" id="page-mood">
+  <h2 class="sec-title rainbow-text">Tracker de Humor</h2><p class="sec-sub">Reconoce tus patrones sin juzgarte</p>
+  <div class="mood-picker" id="moodPicker"></div>
+  <div class="mood-grid" id="moodGrid"></div>
+</div>
+
+<div class="page" id="page-energy">
+  <h2 class="sec-title rainbow-text">Tracker de Energía</h2><p class="sec-sub">Aprende cuándo rendir más</p>
+  <div class="card"><div class="card-title">⚡ Esta Semana</div><div class="energy-bar-grid" id="energyBars"></div></div>
+  <div class="card"><div class="card-title">🚀 ¿Qué subió mi energía?</div><textarea id="energy_up" class="cloud-area"></textarea></div>
+  <div class="card"><div class="card-title">😔 ¿Qué bajó mi energía?</div><textarea id="energy_down" class="cloud-area"></textarea></div>
+</div>
+
+<div class="page" id="page-selfcare">
+  <h2 class="sec-title rainbow-text">Autocuidado 2026</h2><p class="sec-sub">El cuidado propio es tu prioridad</p>
+  <div class="selfcare-grid" id="selfcareGrid"></div>
+  <div class="card" style="margin-top:16px"><div class="card-title">💜 Nota de Amor Propio</div><textarea id="selfcare_note" class="cloud-area"></textarea></div>
+</div>
+
+<div class="page" id="page-pomo">
+  <h2 class="sec-title rainbow-text">Sesión Pomodoro</h2><p class="sec-sub">25 minutos de foco</p>
+  <div class="card"><div class="card-title">📌 Tarea de esta Sesión</div><input id="pomo_task" type="text" style="background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);width:100%;padding:8px 0"></div>
+  <div class="pomo-timer">
+    <div class="timer-ring" onclick="toggleTimer()">
+      <svg width="190" height="190" viewBox="0 0 190 190"><circle cx="95" cy="95" r="86" stroke="#112A4F" stroke-width="9"/><circle cx="95" cy="95" r="86" id="timerCircle" stroke="var(--g)" stroke-width="9" stroke-linecap="round" stroke-dasharray="540" stroke-dashoffset="0"/></svg>
+      <div class="timer-display"><div class="timer-num" id="timerDisplay">25:00</div><div class="timer-label" id="timerMode">FOCO</div></div>
+    </div>
+    <div><button class="pomo-btn" onclick="toggleTimer()" id="pomoBtn" style="background:var(--g);color:#0A192F">▶ INICIAR</button><button class="pomo-btn" onclick="resetTimer()" style="background:var(--bg3);color:var(--muted)">↺ RESET</button><button class="pomo-btn" onclick="skipToBreak()" style="background:var(--bg3);color:var(--muted)">⏭ SKIP</button></div>
+    <div style="margin-top:24px;display:flex;gap:20px;justify-content:center">
+      <div style="text-align:center"><div style="font-size:32px;color:var(--r)" id="pomoCount">0</div><div style="font-size:11px;color:var(--muted)">POMODOROS</div></div>
+      <div style="text-align:center"><div style="font-size:32px;color:var(--y)" id="pomoPts">0</div><div style="font-size:11px;color:var(--muted)">PUNTOS</div></div>
+      <div style="text-align:center"><div style="font-size:32px;color:var(--g)" id="pomoMins">0</div><div style="font-size:11px;color:var(--muted)">MINUTOS</div></div>
+    </div>
+  </div>
+  <div id="pomoLog"></div>
+</div>
+
+<div class="page" id="page-goals">
+  <h2 class="sec-title rainbow-text">Planificador de Metas</h2><p class="sec-sub">2026 · Árbol de Metas</p>
+  <div class="goal-tree">
+    <div class="goal-main"><div style="font-size:11px;color:var(--v);margin-bottom:10px">🌟 META GRANDE DEL AÑO</div><input id="goal_main_title" type="text" style="background:none;border:none;color:var(--text);font-size:20px;width:100%;padding:4px 0"><textarea id="goal_main_desc" class="cloud-area"></textarea></div>
+    <div id="goalMinis"></div>
+    <button onclick="addGoalMini()" class="btn-ghost" style="margin-left:20px">+ Agregar mini-meta</button>
+  </div>
+</div>
+
+<div class="page" id="page-rewards">
+  <h2 class="sec-title rainbow-text">Sistema de Recompensas</h2>
+  <p class="sec-sub">Dopamina estratégica · Tu cerebro lo merece</p>
+
+  <!-- NIVEL Y PUNTOS -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">TUS PUNTOS TOTALES</div>
+        <div style="font-size:56px;font-weight:900" class="rainbow-text" id="totalPoints">0</div>
+      </div>
+      <div style="flex:1;min-width:160px">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Nivel: <span id="levelName" style="color:var(--r);font-weight:900">Principiante</span></div>
+        <div class="prog-bar" style="height:12px"><div class="prog-fill" id="ptsFill" style="width:0%;background:linear-gradient(90deg,var(--r),var(--v))"></div></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px"><span id="ptsToNext">50</span> pts para subir de nivel ✨</div>
+      </div>
+    </div>
+    <!-- RACHA -->
+    <div class="streak-display">
+      <span class="streak-fire">🔥</span>
+      <div>
+        <div style="font-size:18px;font-weight:900;color:var(--r)" id="streakCount">0</div>
+        <div style="font-size:11px;color:var(--muted)">DÍAS DE RACHA</div>
+      </div>
+      <div style="margin-left:auto;font-size:12px;color:var(--muted);text-align:right">Racha más larga:<br><span style="color:var(--v);font-weight:700" id="bestStreak">0 días</span></div>
+    </div>
+  </div>
+
+  <!-- RETO SEMANAL -->
+  <div class="challenge-card" id="weeklyChallenge">
+    <div class="challenge-title">🎯 Reto de la Semana</div>
+    <div class="challenge-desc" id="challengeDesc">Completa 5 pomodoros esta semana</div>
+    <div class="challenge-prog"><div class="challenge-fill" id="challengeFill" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:12px;color:var(--muted)" id="challengeProgress">0 / 5 completados</span>
+      <span class="challenge-pts">+50 pts al completar 🏆</span>
+    </div>
+  </div>
+
+  <!-- GANAR PUNTOS -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">⚡ Ganar Puntos</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="addPoints(5,'Tarea completada ✓')" style="background:var(--bg);border:1px solid #1e3a63;color:var(--g);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px">+5 Tarea ✓</button>
+      <button onclick="addPoints(10,'Pomodoro 🍅')" style="background:var(--bg);border:1px solid #1e3a63;color:var(--b);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px">+10 Pomodoro 🍅</button>
+      <button onclick="addPoints(3,'Hábito ✅')" style="background:var(--bg);border:1px solid #1e3a63;color:var(--y);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px">+3 Hábito ✅</button>
+      <button onclick="addPoints(2,'Gratitud 💜')" style="background:var(--bg);border:1px solid #1e3a63;color:var(--r);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px">+2 Gratitud 💜</button>
+      <button onclick="addPoints(7,'Meta 🎯')" style="background:var(--bg);border:1px solid #1e3a63;color:var(--v);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px">+7 Meta 🎯</button>
+      <button onclick="addPoints(15,'¡Día perfecto! 🌟')" style="background:linear-gradient(135deg,var(--r),var(--v));color:#0A192F;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:900;font-size:12px">+15 Día perfecto ⭐</button>
+    </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1e3a63;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--muted)">¿Puntos incorrectos?</span>
+      <button onclick="restarPuntos()" style="background:none;border:1px solid #E27D60;color:#E27D60;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700">− Restar puntos</button>
+      <button onclick="resetearPuntos()" style="background:none;border:1px solid #1e3a63;color:var(--muted);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700">↺ Resetear a 0</button>
+    </div>
+  </div>
+
+  <!-- LOGROS/BADGES -->
+  <div class="card-title" style="margin-bottom:12px">🏅 Logros Desbloqueables</div>
+  <div class="badge-grid" id="badgeGrid"></div>
+
+  <!-- TIENDA -->
+  <div class="card-title" style="margin-bottom:12px">🛍 Tienda de Recompensas</div>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Haz clic para reclamar · Las ⭐ requieren más puntos</p>
+  <div class="reward-grid" id="rewardGrid"></div>
+  <div id="rewardLog" style="margin-top:16px"></div>
+</div>
+
+<!-- LEVEL UP OVERLAY -->
+<div id="levelup-overlay" onclick="this.style.display='none'">
+  <div class="levelup-card">
+    <div style="font-size:60px;margin-bottom:12px">🎉</div>
+    <div style="font-size:14px;color:var(--muted);letter-spacing:2px;margin-bottom:8px">¡SUBISTE DE NIVEL!</div>
+    <div style="font-size:28px;font-weight:900" class="rainbow-text" id="levelupName">Explorador</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:12px;margin-bottom:24px">¡Tu cerebro sigue creciendo! 🧠✨</div>
+    <button onclick="document.getElementById('levelup-overlay').style.display='none'" style="background:linear-gradient(135deg,var(--r),var(--v));border:none;border-radius:12px;color:#0A192F;font-family:'Montserrat',sans-serif;font-weight:900;font-size:14px;padding:12px 32px;cursor:pointer">¡GENIAL! 🚀</button>
+  </div>
+</div>
+
+<div class="page" id="page-reflect">
+  <h2 class="sec-title rainbow-text">Reflexión Mensual</h2><p class="sec-sub">Cierra ciclos sin rumiación</p>
+  <div style="display:flex;gap:8px;margin-bottom:24px"><select id="reflect_month"><option>Enero</option><option>Febrero</option><option>Marzo</option><option selected>Abril</option><option>Mayo</option><option>Junio</option><option>Julio</option><option>Agosto</option><option>Septiembre</option><option>Octubre</option><option>Noviembre</option><option>Diciembre</option></select></div>
+  <div class="reflect-q"><label style="color:var(--g)">🌟 ¿Qué funcionó bien este mes?</label><textarea id="reflect_q1" class="cloud-area"></textarea></div>
+  <div class="reflect-q"><label style="color:var(--b)">🔧 ¿Qué ajusto el próximo mes?</label><textarea id="reflect_q2" class="cloud-area"></textarea></div>
+  <div class="reflect-q"><label style="color:var(--v)">💜 ¿Cómo me sentí este mes?</label><textarea id="reflect_q3" class="cloud-area"></textarea></div>
+  <div class="reflect-q"><label style="color:var(--y)">✨ Mi aprendizaje más grande</label><textarea id="reflect_q4" class="cloud-area"></textarea></div>
+  <div class="reflect-q"><label style="color:var(--r)">🚀 Mi intención para el próximo mes</label><textarea id="reflect_q5" class="cloud-area"></textarea></div>
+</div>
+
+<div class="page" id="page-gratitude">
+  <h2 class="sec-title rainbow-text">Diario de Gratitud</h2>
+  <div id="gratDays"></div>
+</div>
+
+<div class="page" id="page-notes">
+  <h2 class="sec-title rainbow-text">Notas Libres</h2>
+  <div class="notes-lines"><textarea id="notes_main" class="notes-area"></textarea></div>
+</div>
+
+<div class="page" id="page-stats">
+  <h2 class="sec-title rainbow-text">Mis Estadísticas</h2>
+  <p class="sec-sub">Tu progreso en un vistazo</p>
+
+  <!-- RESUMEN RÁPIDO -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px" id="statsQuick"></div>
+
+  <!-- HÁBITOS ESTE MES -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">✅ Hábitos este mes</div>
+    <div id="statsHabits"></div>
+  </div>
+
+  <!-- HUMOR DEL MES -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">💜 Distribución de humor</div>
+    <div id="statsMood"></div>
+  </div>
+
+  <!-- POMODOROS POR SEMANA -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">🍅 Pomodoros totales</div>
+    <div id="statsPomo"></div>
+  </div>
+
+  <!-- RACHA Y PUNTOS -->
+  <div class="card">
+    <div class="card-title">🏆 Tu historial</div>
+    <div id="statsHistory"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SCRIPTS ═══════════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAbOCOC_L7L5_uogCVdxX0A0_zOYI7LrdU",
+  authDomain: "kintsugi-focus-app.firebaseapp.com",
+  projectId: "kintsugi-focus-app",
+  storageBucket: "kintsugi-focus-app.firebasestorage.app",
+  messagingSenderId: "616898183162",
+  appId: "1:616898183162:web:f720a711fa237caea32e43"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+let currentUser = null;
+const appId = 'kintsugi-focus-app';
+
+// ── FORMAT CODE INPUT ──
+window.formatCode = function(input) {
+  let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if(v.length > 2) v = 'KF-' + v.replace(/^KF/,'').replace(/-/g,'');
+  else v = v;
+  // Format as KF-XXXX-XXXX
+  let raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(raw.startsWith('KF')) raw = raw.slice(2);
+  raw = raw.replace(/-/g,'');
+  let formatted = 'KF';
+  if(raw.length > 0) formatted += '-' + raw.slice(0,4);
+  if(raw.length > 4) formatted += '-' + raw.slice(4,8);
+  input.value = formatted;
+}
+
+// ── TAB SWITCHING ──
+window.switchTab = function(tab) {
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+  document.getElementById('panelLogin').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('panelRegister').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('authError').textContent = '';
+}
+
+// ── VALIDATE ACCESS CODE ──
+async function validateCode(code) {
+  const codesRef = collection(db, 'access_codes');
+  const q = query(codesRef, where('code', '==', code.toUpperCase()), where('used', '==', false));
+  const snap = await getDocs(q);
+  if(snap.empty) return null;
+  return { id: snap.docs[0].id, ...snap.docs[0].data() };
+}
+
+async function markCodeUsed(codeId, userEmail) {
+  const codeRef = doc(db, 'access_codes', codeId);
+  await updateDoc(codeRef, { used: true, usedBy: userEmail, usedAt: Date.now() });
+}
+
+// ── AUTH ──
+window.loginUser = async function() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const err = document.getElementById('authError');
+  if(!email || !pass) { err.textContent = 'Ingresa correo y contraseña'; return; }
+  err.textContent = 'Iniciando sesión...';
+  err.style.color = 'var(--muted)';
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+    err.textContent = '';
+  } catch(e) {
+    err.style.color = '#E27D60';
+    err.textContent = 'Error: correo o contraseña incorrectos.';
+  }
+}
+
+window.registerUser = async function() {
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const code = document.getElementById('accessCode').value.trim();
+  const err = document.getElementById('authError');
+
+  if(!email || !pass) { err.style.color='#E27D60'; err.textContent='Ingresa correo y contraseña'; return; }
+  if(pass.length < 6) { err.style.color='#E27D60'; err.textContent='La contraseña debe tener al menos 6 caracteres'; return; }
+  if(!code || code.length < 10) { err.style.color='#E27D60'; err.textContent='Ingresa tu código de acceso (KF-XXXX-XXXX)'; return; }
+
+  err.style.color='var(--muted)'; err.textContent='Validando código...';
+
+  try {
+    const codeData = await validateCode(code);
+    if(!codeData) { err.style.color='#E27D60'; err.textContent='❌ Código inválido o ya usado. Verifica tu compra.'; return; }
+
+    err.textContent='Creando tu cuenta...';
+    const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+    await markCodeUsed(codeData.id, email);
+
+    // Guardar info del acceso en el perfil del usuario
+    const userRef = doc(db, 'artifacts', appId, 'users', userCred.user.uid, 'planner', 'profile');
+    await setDoc(userRef, { accessType: codeData.type, activatedAt: Date.now(), codeUsed: code }, { merge: true });
+
+    err.textContent = '';
+  } catch(e) {
+    err.style.color='#E27D60';
+    if(e.code === 'auth/email-already-in-use') err.textContent='Este correo ya tiene una cuenta. Inicia sesión.';
+    else err.textContent='Error al crear cuenta. Intenta de nuevo.';
+  }
+}
+
+window.logoutUser = async function() {
+  if(confirm('¿Cerrar sesión?')) { await signOut(auth); window.location.reload(); }
+}
+
+// ── APP STATE ──
+let appState = {
+  inputs:{}, points:0,
+  habits:[{name:'Agua 2L',color:'var(--b)'},{name:'Ejercicio',color:'var(--g)'},{name:'Leer 30 min',color:'var(--y)'},{name:'Meditación',color:'var(--v)'},{name:'Sin redes -9am',color:'var(--r)'}],
+  habitData:{}, moodData:{}, energyData:{}, energyBars:{}, events:[], claimedRewards:[],
+  pomCount:0, pomMins:0, goalMinis:[{title:'',steps:[{done:false,text:''}]}],
+  selfcareStreaks:{}, selectedMood:0, currentMonth:new Date().getMonth()
+};
+
+const DAYS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const RCOLORS=['var(--r)','var(--o)','var(--y)','var(--g)','var(--b)','var(--v)','#FFFFFF'];
+const MOODS=[{name:'😄 Alegre',color:'var(--r)'},{name:'😤 Irritado',color:'#E27D60'},{name:'😔 Bajo',color:'var(--b)'},{name:'😰 Ansioso',color:'#E8A87C'},{name:'🧠 Focused',color:'var(--g)'},{name:'😴 Cansado',color:'var(--muted)'},{name:'😐 Neutral',color:'#888'}];
+const REWARDS=[{icon:'🎮',name:'30 min gaming',pts:10},{icon:'☕',name:'Café especial',pts:5},{icon:'🎵',name:'Playlist favorita',pts:3},{icon:'🛁',name:'Baño relajante',pts:8},{icon:'🍕',name:'Comida favorita',pts:15},{icon:'😴',name:'Siesta 20 min',pts:7},{icon:'📺',name:'1 episodio',pts:10},{icon:'🌿',name:'Paseo al aire libre',pts:5},{icon:'🎨',name:'Tiempo creativo',pts:12},{icon:'📱',name:'Scroll libre 20 min',pts:4},{icon:'🍫',name:'Chocolate',pts:3},{icon:'🎲',name:'Juego de mesa',pts:8},{icon:'🛍️',name:'Compra pequeña',pts:20},{icon:'🎬',name:'Película',pts:15},{icon:'🧘',name:'Meditación guiada',pts:6}];
+const SELFCARE=[{id:'sc1',icon:'💧',name:'Agua 2L'},{id:'sc2',icon:'🏃',name:'Ejercicio'},{id:'sc3',icon:'🛌',name:'8h de sueño'},{id:'sc4',icon:'🥗',name:'Comida sana'},{id:'sc5',icon:'🌳',name:'Tiempo al aire libre'},{id:'sc6',icon:'📵',name:'Descanso digital'},{id:'sc7',icon:'🧘',name:'Meditación'},{id:'sc8',icon:'📖',name:'Leer 30 min'},{id:'sc9',icon:'👥',name:'Tiempo social'},{id:'sc10',icon:'🎨',name:'Actividad creativa'},{id:'sc11',icon:'🛁',name:'Rutina higiene'},{id:'sc12',icon:'💊',name:'Medicación'}];
+const LEVELS=[{name:'Principiante',pts:0},{name:'Explorador',pts:50},{name:'Guerrero',pts:150},{name:'Maestro Focus',pts:300},{name:'Mente Kintsugi',pts:500}];
+
+let pomInterval=null, pomSecs=25*60, pomRunning=false, pomMode='focus';
+let saveTimeout;
+
+function scheduleSave() {
+  if(!currentUser) return;
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(saveData, 1500);
+}
+
+async function saveData() {
+  if(!currentUser) return;
+  try {
+    const ref = doc(db,'artifacts',appId,'users',currentUser.uid,'planner','state');
+    await setDoc(ref, appState, {merge:true});
+    const s = document.getElementById('save-status');
+    s.textContent = '✓ Guardado'; s.style.color='var(--g)';
+    s.classList.add('visible'); setTimeout(()=>s.classList.remove('visible'),2000);
+  } catch(e){}
+}
+
+async function loadData() {
+  try {
+    const ref = doc(db,'artifacts',appId,'users',currentUser.uid,'planner','state');
+    const snap = await getDoc(ref);
+    if(snap.exists()) appState = {...appState,...snap.data()};
+  } catch(e){}
+}
+
+function hideLoading() {
+  const ol = document.getElementById('loading-overlay');
+  ol.style.opacity='0'; setTimeout(()=>ol.style.display='none',500);
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if(user) {
+    currentUser = user;
+    document.getElementById('auth-overlay').style.display='none';
+    document.getElementById('mainNav').style.display='flex';
+    showEmergencyBtn();
+    document.getElementById('loading-overlay').style.display='flex';
+    document.getElementById('loading-overlay').style.opacity='1';
+    await loadData();
+    initApp();
+    hideLoading();
+  } else {
+    currentUser = null;
+    document.getElementById('auth-overlay').style.display='flex';
+    document.getElementById('mainNav').style.display='none';
+    hideLoading();
+  }
+});
+
+function initApp() {
+  generateTimeBlocks(); generateWeekGrid(); generateGratitude(); renderDashProgress();
+  renderCalendar(); renderEvents(); renderHabits(); renderMoodPicker(); renderMoodGrid();
+  renderEnergyBars(); renderSelfCare(); renderRewards(); renderBadges(); renderChallenge(); renderGoals(); updatePointsDisplay();
+  setupEnergyDots('energyDots','daily_energy'); setupEnergyDots('energyEnd','daily_end_energy'); setupEnergyDots('weekEnergyDots','week_energy');
+  document.getElementById('pomoCount').textContent=appState.pomCount;
+  document.getElementById('pomoMins').textContent=appState.pomMins;
+  document.getElementById('todayDate').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  bindAllInputs();
+  checkOnboarding();
+}
+
+function bindAllInputs() {
+  document.querySelectorAll('input:not(.auth-input):not(.code-input), textarea, select').forEach(el => {
+    if(el.id && appState.inputs[el.id] !== undefined) {
+      el.value = appState.inputs[el.id];
+      if(el.id==='userName') updateName(el.value);
+    }
+    el.addEventListener('input', e => { if(e.target.id){appState.inputs[e.target.id]=e.target.value; scheduleSave();} });
+  });
+}
+
+function generateTimeBlocks() {
+  const tb=document.getElementById('timeBlocks'); tb.innerHTML='';
+  [['08:00–11:00','var(--g)'],['11:00–13:00','var(--b)'],['15:00–18:00','var(--r)'],['20:00–22:00','var(--v)']].forEach(([t,c],i)=>{
+    const d=document.createElement('div'); d.style.cssText='display:flex;align-items:center;gap:12px;margin-bottom:10px';
+    d.innerHTML=`<span style="font-size:12px;font-weight:700;color:${c};min-width:98px">${t}</span><input id="timeblock_${i}" type="text" style="background:none;border:none;border-bottom:1px solid #1e3a63;color:var(--text);flex:1">`;
+    tb.appendChild(d);
+  });
+}
+
+function generateWeekGrid() {
+  const wg=document.getElementById('weekGrid'); wg.innerHTML='';
+  DAYS.forEach((day,i)=>{
+    const c=document.createElement('div'); c.className='day-col'; c.style.borderTopColor=RCOLORS[i];
+    c.innerHTML=`<div class="day-name" style="color:${RCOLORS[i]}">${day}</div>${['#1','#2','#3'].map((_,idx)=>`<input id="week_${i}_goal_${idx}" class="day-input" type="text" placeholder="${['#1','#2','#3'][idx]}">`).join('')}`;
+    wg.appendChild(c);
+  });
+}
+
+function generateGratitude() {
+  const gd=document.getElementById('gratDays'); gd.innerHTML='';
+  for(let d=1;d<=7;d++){
+    const dc=document.createElement('div'); dc.className='card';
+    dc.innerHTML=`<div class="card-title" style="color:${RCOLORS[(d-1)%7]}">DÍA ${d}</div>${[1,2,3].map(n=>`<div class="grat-entry"><div class="grat-num" style="background:${RCOLORS[(n-1)%7]};color:#0A192F">${n}</div><input id="grat_${d}_${n}" class="grat-input" type="text" placeholder="Hoy agradezco..."></div>`).join('')}`;
+    gd.appendChild(dc);
+  }
+}
+
+function renderDashProgress() {
+  const dp=document.getElementById('dashProgress'); if(!dp) return; dp.innerHTML='';
+  MONTHS.forEach((m,i)=>{
+    const cur=appState.currentMonth; const pct=i<cur?100:i===cur?Math.round((new Date().getDate()/30)*100):0;
+    dp.innerHTML+=`<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:4px"><span>${m.toUpperCase()}</span><span>${pct}%</span></div><div class="prog-bar" style="margin-top:0"><div class="prog-fill" style="width:${pct}%;background:${RCOLORS[i%7]}"></div></div></div>`;
+  });
+}
+
+function setupEnergyDots(cid, sk) {
+  const ed=document.getElementById(cid); if(!ed) return; ed.innerHTML='';
+  ['😴','😑','🙂','😊','🔥'].forEach((em,i)=>{
+    const d=document.createElement('div'); d.className='e-dot'; d.textContent=em;
+    const c=RCOLORS[Math.floor(i*1.1)]||'var(--g)';
+    if(appState.energyData[sk]===i){d.classList.add('active');d.style.background=c;}
+    d.onclick=()=>{ed.querySelectorAll('.e-dot').forEach(x=>{x.classList.remove('active');x.style.background='var(--bg3)'});d.classList.add('active');d.style.background=c;appState.energyData[sk]=i;scheduleSave();};
+    ed.appendChild(d);
+  });
+}
+
+function renderCalendar() {
+  const m=appState.currentMonth; const y=2026;
+  document.getElementById('monthTitle').textContent=`${MONTHS[m]} ${y}`;
+  const hdr=document.getElementById('calHeaders'); hdr.innerHTML='';
+  ['L','M','X','J','V','S','D'].forEach((d,i)=>{const el=document.createElement('div');el.className='cal-header';el.style.color=RCOLORS[i];el.textContent=d;hdr.appendChild(el)});
+  const grid=document.getElementById('calGrid'); grid.innerHTML='';
+  const first=new Date(y,m,1).getDay(); const offset=first===0?6:first-1; const days=new Date(y,m+1,0).getDate();
+  for(let i=0;i<offset;i++) grid.appendChild(document.createElement('div'));
+  for(let d=1;d<=days;d++){const cell=document.createElement('div');cell.className='cal-day';cell.textContent=d;grid.appendChild(cell);}
+}
+
+window.changeMonth=function(dir){appState.currentMonth=Math.max(0,Math.min(11,appState.currentMonth+dir));renderCalendar();renderHabits();renderDashProgress();scheduleSave();}
+window.addEvent=function(){const v=document.getElementById('newEvent').value.trim();if(!v)return;appState.events.push(v);document.getElementById('newEvent').value='';renderEvents();scheduleSave();}
+
+function renderEvents(){
+  const el=document.getElementById('dashEvents'); el.innerHTML='';
+  appState.events.slice(-4).forEach((e,i)=>{
+    const d=document.createElement('div'); d.style.cssText='font-size:13px;padding:6px 0;border-bottom:1px solid #1e3a63;display:flex;gap:8px;align-items:center';
+    d.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;background:${RCOLORS[i]};flex-shrink:0;display:inline-block"></span>${e}`;
+    el.appendChild(d);
+  });
+}
+
+function renderHabits(){
+  const ht=document.getElementById('habitTracker'); ht.innerHTML=''; const m=appState.currentMonth; const dim=new Date(2026,m+1,0).getDate();
+  document.getElementById('habitMonthLabel').textContent=MONTHS[m]+' 2026';
+  appState.habits.forEach((h,hi)=>{
+    const row=document.createElement('div'); row.className='habit-row';
+    const circles=Array.from({length:dim},(_,d)=>{const k=`${m}-${hi}-${d}`;const done=appState.habitData[k];return`<div class="hc${done?' done':''}" style="${done?`background:${h.color};border-color:${h.color}`:'border-color:#1e3a63'}" onclick="window.toggleHabit(${m},${hi},${d},this,'${h.color}')"></div>`;}).join('');
+    row.innerHTML=`<span class="habit-name" style="color:${h.color}">${h.name}</span><div class="habit-circles">${circles}</div>`;
+    ht.appendChild(row);
+  });
+}
+
+window.toggleHabit=function(m,hi,d,el,c){const k=`${m}-${hi}-${d}`;appState.habitData[k]=!appState.habitData[k];el.classList.toggle('done');el.style.background=appState.habitData[k]?c:'';el.style.borderColor=appState.habitData[k]?c:'#1e3a63';scheduleSave();}
+window.addHabit=function(){const v=document.getElementById('newHabit').value.trim();if(!v)return;appState.habits.push({name:v,color:RCOLORS[appState.habits.length%RCOLORS.length]});document.getElementById('newHabit').value='';renderHabits();scheduleSave();}
+
+function renderMoodPicker(){
+  const mp=document.getElementById('moodPicker'); mp.innerHTML='';
+  MOODS.forEach((m,i)=>{
+    const b=document.createElement('button'); b.className=`mood-opt${i===appState.selectedMood?' selected':''}`;
+    b.style.cssText=`background:${m.color}22;color:${m.color};border-color:${i===appState.selectedMood?m.color:'transparent'}`;b.textContent=m.name;
+    b.onclick=()=>{appState.selectedMood=i;document.querySelectorAll('.mood-opt').forEach((x,j)=>{x.style.borderColor=j===i?MOODS[j].color:'transparent'});scheduleSave();};
+    mp.appendChild(b);
+  });
+}
+
+function renderMoodGrid(){
+  const mg=document.getElementById('moodGrid'); mg.innerHTML=''; const m=appState.currentMonth; const dim=new Date(2026,m+1,0).getDate();
+  for(let d=1;d<=dim;d++){
+    const k=`${m}-${d}`;const c=document.createElement('div');c.className='mood-cell';c.textContent=d;
+    if(appState.moodData[k]){c.style.background=appState.moodData[k];c.style.color='#0A192F';}
+    c.onclick=()=>{appState.moodData[k]=MOODS[appState.selectedMood].color;c.style.background=MOODS[appState.selectedMood].color;c.style.color='#0A192F';scheduleSave();};
+    mg.appendChild(c);
+  }
+}
+
+function renderEnergyBars(){
+  const eb=document.getElementById('energyBars'); eb.innerHTML='';
+  DAYS.forEach((_,i)=>{
+    const wrap=document.createElement('div'); wrap.className='e-bar-wrap';
+    if(!appState.energyBars[i]) appState.energyBars[i]=50;
+    let level=appState.energyBars[i];
+    const bar=document.createElement('div'); bar.className='e-bar'; bar.style.cssText=`height:${level}%;background:${level>70?'var(--g)':level>40?'var(--y)':'var(--r)'};transition:height .4s`;
+    bar.onclick=()=>{const v=prompt('Energía (1-10):',Math.round(level/10));if(v&&!isNaN(v)){const pct=Math.min(100,Math.max(8,parseInt(v)*10));appState.energyBars[i]=pct;bar.style.height=pct+'%';bar.style.background=pct>70?'var(--g)':pct>40?'var(--y)':'var(--r)';scheduleSave();}};
+    wrap.appendChild(bar); eb.appendChild(wrap);
+  });
+}
+
+function renderSelfCare(){
+  const sg=document.getElementById('selfcareGrid'); sg.innerHTML='';
+  SELFCARE.forEach(sc=>{
+    const streak=appState.selfcareStreaks[sc.id]||{count:0,doneToday:false};
+    const c=document.createElement('div'); c.className='sc-card'+(streak.doneToday?' done':'');
+    c.innerHTML=`<div class="sc-icon">${sc.icon}</div><div class="sc-name">${sc.name}</div><div class="sc-streak">${streak.count} días seguidos</div>`;
+    c.onclick=()=>{const was=c.classList.contains('done');c.classList.toggle('done');if(was){streak.count=Math.max(0,streak.count-1);streak.doneToday=false;}else{streak.count+=1;streak.doneToday=true;}appState.selfcareStreaks[sc.id]=streak;c.querySelector('.sc-streak').textContent=streak.count+' días seguidos';scheduleSave();};
+    sg.appendChild(c);
+  });
+}
+
+window.toggleTimer=function(){
+  if(pomRunning){clearInterval(pomInterval);pomRunning=false;document.getElementById('pomoBtn').textContent='▶ CONTINUAR';}
+  else{pomRunning=true;document.getElementById('pomoBtn').textContent='⏸ PAUSAR';
+    pomInterval=setInterval(()=>{pomSecs--;updateTimerDisplay();
+      if(pomSecs<=0){clearInterval(pomInterval);pomRunning=false;
+        if(pomMode==='focus'){appState.pomCount++;appState.pomMins+=25;document.getElementById('pomoCount').textContent=appState.pomCount;document.getElementById('pomoMins').textContent=appState.pomMins;window.addPoints(10,'Pomodoro 🍅');pomMode='break';pomSecs=5*60;document.getElementById('timerMode').textContent='DESCANSO';document.getElementById('timerCircle').style.stroke='var(--b)';document.getElementById('pomoBtn').textContent='▶ INICIAR DESCANSO';scheduleSave();}
+        else{pomMode='focus';pomSecs=25*60;document.getElementById('timerMode').textContent='FOCO';document.getElementById('timerCircle').style.stroke='var(--g)';document.getElementById('pomoBtn').textContent='▶ INICIAR FOCO';}}
+    },1000);
+  }
+}
+function updateTimerDisplay(){const m=Math.floor(pomSecs/60);const s=pomSecs%60;document.getElementById('timerDisplay').textContent=`${m}:${s.toString().padStart(2,'0')}`;const total=pomMode==='focus'?25*60:5*60;document.getElementById('timerCircle').style.strokeDashoffset=540*(1-pomSecs/total);}
+window.resetTimer=function(){clearInterval(pomInterval);pomRunning=false;pomSecs=25*60;pomMode='focus';updateTimerDisplay();document.getElementById('timerMode').textContent='FOCO';document.getElementById('timerCircle').style.stroke='var(--g)';document.getElementById('pomoBtn').textContent='▶ INICIAR';}
+window.skipToBreak=function(){clearInterval(pomInterval);pomRunning=false;if(pomMode==='focus'){pomMode='break';pomSecs=5*60;document.getElementById('timerMode').textContent='DESCANSO';document.getElementById('timerCircle').style.stroke='var(--b)';}else{pomMode='focus';pomSecs=25*60;document.getElementById('timerMode').textContent='FOCO';document.getElementById('timerCircle').style.stroke='var(--g)';}updateTimerDisplay();document.getElementById('pomoBtn').textContent='▶ INICIAR';}
+
+function renderGoals(){
+  const container=document.getElementById('goalMinis'); container.innerHTML='';
+  appState.goalMinis.forEach((mini,idx)=>{
+    const cols=['var(--r)','var(--o)','var(--y)','var(--g)','var(--b)'];const color=cols[idx%cols.length];const wrapper=document.createElement('div');
+    let stepsHTML=''; mini.steps.forEach((_,sIdx)=>{stepsHTML+=`<div class="goal-step"><div class="step-check ${mini.steps[sIdx].done?'done':''}" onclick="window.toggleGoalStep(${idx},${sIdx},this)"></div><input id="goal_${idx}_step_${sIdx}" type="text" placeholder="Paso concreto..." style="background:none;border:none;color:var(--text);font-family:'Montserrat',sans-serif;font-size:13px;flex:1"></div>`;});
+    wrapper.innerHTML=`<div class="goal-mini" style="border-left-color:${color}"><div style="font-size:10px;font-weight:900;color:${color};letter-spacing:2px;margin-bottom:10px">MINI-META ${idx+1}</div><input id="goal_${idx}_title" type="text" placeholder="Mini meta..." style="background:none;border:none;color:var(--text);font-family:'Montserrat',sans-serif;font-size:16px;font-weight:700;width:100%;margin-bottom:10px"><div id="steps-${idx}">${stepsHTML}</div><button onclick="window.addGoalStep(${idx})" class="btn-ghost" style="font-size:11px;padding:6px 12px;margin-left:0;margin-top:4px">+ Paso</button></div>`;
+    container.appendChild(wrapper);
+  });
+}
+
+window.addGoalMini=function(){appState.goalMinis.push({title:'',steps:[{done:false,text:''}]});renderGoals();bindAllInputs();scheduleSave();}
+window.addGoalStep=function(idx){appState.goalMinis[idx].steps.push({done:false,text:''});renderGoals();bindAllInputs();scheduleSave();}
+window.toggleGoalStep=function(idx,sIdx,el){appState.goalMinis[idx].steps[sIdx].done=!appState.goalMinis[idx].steps[sIdx].done;el.classList.toggle('done');scheduleSave();}
+
+function renderRewards(){
+  const rg=document.getElementById('rewardGrid'); rg.innerHTML='';
+  REWARDS.forEach((r,ri)=>{
+    const isClaimed=appState.claimedRewards.includes(ri);
+    const canAfford=appState.points>=r.pts;
+    const isPremium=r.pts>=15;
+    const c=document.createElement('div');
+    c.className='reward-card'+(isClaimed?' claimed':'')+(isPremium?' premium':'')+((!canAfford&&!isClaimed)?' locked':'');
+    c.innerHTML=`<div class="reward-claimed">✓</div><div class="reward-icon">${r.icon}</div><div class="reward-name">${r.name}</div><div class="reward-pts">${r.pts} pts</div>${(!canAfford&&!isClaimed)?`<div class="reward-lock">🔒 Te faltan ${r.pts-appState.points} pts</div>`:''}`;
+    c.onclick=()=>{
+      if(!canAfford&&!appState.claimedRewards.includes(ri)){c.style.animation='shake .3s ease';setTimeout(()=>c.style.animation='',400);return;}
+      const cur=appState.claimedRewards.includes(ri);
+      if(cur){appState.claimedRewards=appState.claimedRewards.filter(id=>id!==ri);c.classList.remove('claimed');}
+      else{appState.claimedRewards.push(ri);c.classList.add('claimed');logReward(`🎉 ¡Reclamaste: ${r.name}!`);launchConfetti();showFloatingPts(`${r.icon} ¡Canjeado!`,c);}
+      scheduleSave(); renderRewards();
+    };
+    rg.appendChild(c);
+  });
+}
+
+function renderBadges(){
+  const bg=document.getElementById('badgeGrid'); if(!bg) return; bg.innerHTML='';
+  const BADGES=[
+    {id:'first_pomo',icon:'🍅',name:'Primer Foco',desc:'Completa 1 pomodoro',check:()=>appState.pomCount>=1},
+    {id:'ten_pomos',icon:'🔥',name:'En Llamas',desc:'10 pomodoros totales',check:()=>appState.pomCount>=10},
+    {id:'first_habit',icon:'✅',name:'Constancia',desc:'Marca tu primer hábito',check:()=>Object.values(appState.habitData).some(v=>v)},
+    {id:'gratitude3',icon:'🌸',name:'Corazón Abierto',desc:'3 días de gratitud',check:()=>appState.inputs['daily_grat_1']&&appState.inputs['grat_1_1']&&appState.inputs['grat_2_1']},
+    {id:'level2',icon:'⚡',name:'Explorador',desc:'Llega al nivel Explorador',check:()=>appState.points>=50},
+    {id:'level3',icon:'🏆',name:'Guerrero',desc:'Llega al nivel Guerrero',check:()=>appState.points>=150},
+    {id:'level4',icon:'🧠',name:'Maestro Focus',desc:'Llega a Maestro Focus',check:()=>appState.points>=300},
+    {id:'kintsugi',icon:'✨',name:'Mente Kintsugi',desc:'500 puntos totales',check:()=>appState.points>=500},
+  ];
+  BADGES.forEach(b=>{
+    const unlocked=b.check();
+    const card=document.createElement('div');
+    card.className='badge-card'+(unlocked?' unlocked':' locked-badge');
+    card.innerHTML=`<div class="badge-icon">${b.icon}</div><div class="badge-name">${b.name}</div><div class="badge-desc">${unlocked?'✅ '+b.desc:'🔒 '+b.desc}</div>`;
+    bg.appendChild(card);
+  });
+}
+
+function renderChallenge(){
+  const CHALLENGES=[
+    {desc:'Completa 5 pomodoros esta semana',goal:5,current:()=>Math.min(appState.pomCount,5),pts:50},
+    {desc:'Marca 3 hábitos diferentes hoy',goal:3,current:()=>Math.min(Object.values(appState.habitData).filter(v=>v).length,3),pts:30},
+    {desc:'Escribe 3 gratitudes esta semana',goal:3,current:()=>['daily_grat_1','grat_1_1','grat_2_1'].filter(k=>appState.inputs[k]).length,pts:20},
+  ];
+  const week=new Date().getDay();
+  const ch=CHALLENGES[week%CHALLENGES.length];
+  const cur=ch.current(); const pct=Math.min(100,Math.round((cur/ch.goal)*100));
+  const desc=document.getElementById('challengeDesc'); if(desc) desc.textContent=ch.desc;
+  const fill=document.getElementById('challengeFill'); if(fill) fill.style.width=pct+'%';
+  const prog=document.getElementById('challengeProgress'); if(prog) prog.textContent=`${cur} / ${ch.goal} completados`;
+  const ptsEl=document.querySelector('.challenge-pts'); if(ptsEl) ptsEl.textContent=`+${ch.pts} pts al completar 🏆`;
+}
+
+function launchConfetti(){
+  const colors=['#E5C158','#D4AF37','#8A9A86','#BFA596','#FFFFFF','#F4E2A8'];
+  for(let i=0;i<60;i++){
+    const piece=document.createElement('div'); piece.className='confetti-piece';
+    piece.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};transform:rotate(${Math.random()*360}deg);animation-delay:${Math.random()*0.5}s;animation-duration:${2+Math.random()}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px`;
+    document.body.appendChild(piece);
+    setTimeout(()=>piece.remove(),3500);
+  }
+}
+
+function showFloatingPts(text, el){
+  const fp=document.createElement('div'); fp.className='floating-pts';
+  fp.style.cssText=`top:50%;left:50%;transform:translate(-50%,-50%)`;
+  fp.textContent=text; document.body.appendChild(fp);
+  setTimeout(()=>fp.remove(),1600);
+}
+
+function logReward(msg){const log=document.getElementById('rewardLog');const el=document.createElement('div');el.style.cssText='font-size:13px;color:var(--g);margin-bottom:6px;padding:8px 12px;background:rgba(138,154,134,0.1);border-radius:8px;border-left:3px solid var(--g)';el.textContent=msg;log.prepend(el);}
+
+let prevLevel=0;
+window.addPoints=function(n,label){
+  const oldLevel=LEVELS.filter(l=>appState.points>=l.pts).pop();
+  appState.points+=n; updatePointsDisplay();
+  const newLevel=LEVELS.filter(l=>appState.points>=l.pts).pop();
+  // Puntos flotantes
+  showFloatingPts(`+${n} ✨`, null);
+  // Level up
+  if(newLevel&&oldLevel&&newLevel.name!==oldLevel.name){
+    document.getElementById('levelupName').textContent=newLevel.name;
+    document.getElementById('levelup-overlay').style.display='flex';
+    launchConfetti();
+  }
+  const log=document.getElementById('pomoLog');if(log){const el=document.createElement('div');el.style.cssText='font-size:12px;color:var(--g);margin-bottom:4px;opacity:1;transition:opacity 3s';el.textContent=`+${n} pts · ${label}`;log.prepend(el);setTimeout(()=>el.style.opacity='0.25',3000);}
+  renderRewards(); renderBadges(); scheduleSave();
+}
+
+function updatePointsDisplay(){
+  ['totalPoints','coverPts','pomoPts'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=appState.points;});
+  const level=LEVELS.filter(l=>appState.points>=l.pts).pop();
+  const next=LEVELS.find(l=>l.pts>appState.points);
+  const levelPts=level?level.pts:0; const nextPts=next?next.pts:levelPts+100;
+  const pct=Math.round(((appState.points-levelPts)/(nextPts-levelPts))*100);
+  const fillEl=document.getElementById('ptsFill');if(fillEl)fillEl.style.width=Math.min(100,pct)+'%';
+  const lvlEl=document.getElementById('levelName');if(lvlEl&&level)lvlEl.textContent=level.name;
+  const nextEl=document.getElementById('ptsToNext');if(nextEl)nextEl.textContent=next?next.pts-appState.points:'MAX';
+  // Racha
+  const streak=appState.streak||0; const best=appState.bestStreak||0;
+  const sc=document.getElementById('streakCount');if(sc)sc.textContent=streak;
+  const bs=document.getElementById('bestStreak');if(bs)bs.textContent=best+' días';
+}
+
+window.restarPuntos=function(){
+  const n=parseInt(prompt('¿Cuántos puntos quieres restar?','10'));
+  if(!n||isNaN(n)||n<=0) return;
+  appState.points=Math.max(0,appState.points-n);
+  updatePointsDisplay(); renderRewards(); renderBadges(); scheduleSave();
+  showFloatingPts(`−${n} pts`);
+}
+
+window.resetearPuntos=function(){
+  if(confirm('¿Segura que quieres resetear tus puntos a 0?')){
+    appState.points=0; appState.claimedRewards=[];
+    updatePointsDisplay(); renderRewards(); renderBadges(); scheduleSave();
+  }
+}
+
+window.showPage=function(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>{b.classList.remove('active');b.style.background='';b.style.color='';b.style.borderColor='';});
+  document.getElementById('page-'+id).classList.add('active');btn.classList.add('active');
+}
+window.updateName=function(v){document.title=v?`${v} · Kintsugi Focus`:'Tu Cerebro No Está Roto | App';}
+
+// ── ESTADÍSTICAS ──
+window.renderStats = function() {
+  const m = appState.currentMonth;
+  const dim = new Date(2026, m+1, 0).getDate();
+  const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  // RESUMEN RÁPIDO
+  const totalHabits = Object.values(appState.habitData).filter(v=>v).length;
+  const totalMoods = Object.values(appState.moodData).filter(v=>v).length;
+  const quick = document.getElementById('statsQuick');
+  if(quick) quick.innerHTML = `
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:center;border:1px solid #1e3a63;border-top:3px solid var(--r)">
+      <div style="font-size:32px;font-weight:900;color:var(--r)">${appState.pomCount}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1px">POMODOROS</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:center;border:1px solid #1e3a63;border-top:3px solid var(--g)">
+      <div style="font-size:32px;font-weight:900;color:var(--g)">${totalHabits}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1px">HÁBITOS ✓</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:center;border:1px solid #1e3a63;border-top:3px solid var(--v)">
+      <div style="font-size:32px;font-weight:900;color:var(--v)">${appState.points}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1px">PUNTOS</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:center;border:1px solid #1e3a63;border-top:3px solid var(--b)">
+      <div style="font-size:32px;font-weight:900;color:var(--b)">${appState.pomMins}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1px">MINUTOS FOCO</div>
+    </div>
+  `;
+
+  // HÁBITOS ESTE MES — barra por hábito
+  const habitsEl = document.getElementById('statsHabits');
+  if(habitsEl) {
+    habitsEl.innerHTML = '';
+    appState.habits.forEach((h, hi) => {
+      let count = 0;
+      for(let d=0; d<dim; d++) { if(appState.habitData[`${m}-${hi}-${d}`]) count++; }
+      const pct = Math.round((count/dim)*100);
+      const today = new Date().getDate();
+      const possible = m === appState.currentMonth ? today : dim;
+      habitsEl.innerHTML += `
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:13px;font-weight:700;color:${h.color}">${h.name}</span>
+            <span style="font-size:12px;color:var(--muted)">${count}/${possible} días · ${pct}%</span>
+          </div>
+          <div style="background:var(--bg);border-radius:20px;height:10px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;border-radius:20px;background:${h.color};transition:width .8s ease"></div>
+          </div>
+        </div>`;
+    });
+    if(appState.habits.length === 0) habitsEl.innerHTML = '<p style="color:var(--muted);font-size:13px">Aún no tienes hábitos registrados.</p>';
+  }
+
+  // HUMOR DEL MES — distribución visual
+  const moodEl = document.getElementById('statsMood');
+  if(moodEl) {
+    const moodCount = {};
+    MOODS.forEach(m => moodCount[m.name] = 0);
+    Object.values(appState.moodData).forEach(color => {
+      const mood = MOODS.find(m => m.color === color);
+      if(mood) moodCount[mood.name]++;
+    });
+    const total = Object.values(moodCount).reduce((a,b)=>a+b,0);
+    if(total === 0) { moodEl.innerHTML = '<p style="color:var(--muted);font-size:13px">Aún no has registrado tu humor este mes.</p>'; }
+    else {
+      moodEl.innerHTML = MOODS.map(mood => {
+        const count = moodCount[mood.name];
+        const pct = total > 0 ? Math.round((count/total)*100) : 0;
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-size:13px;min-width:110px;color:${mood.color};font-weight:700">${mood.name}</span>
+          <div style="flex:1;background:var(--bg);border-radius:20px;height:10px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;border-radius:20px;background:${mood.color};transition:width .8s ease"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);min-width:36px;text-align:right">${pct}%</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // POMODOROS
+  const pomoEl = document.getElementById('statsPomo');
+  if(pomoEl) {
+    const mins = appState.pomMins;
+    const hrs = Math.floor(mins/60);
+    const restMins = mins % 60;
+    pomoEl.innerHTML = `
+      <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <div style="text-align:center;flex:1;min-width:100px;background:var(--bg);border-radius:12px;padding:16px">
+          <div style="font-size:36px;font-weight:900;color:var(--r)">${appState.pomCount}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">SESIONES</div>
+        </div>
+        <div style="text-align:center;flex:1;min-width:100px;background:var(--bg);border-radius:12px;padding:16px">
+          <div style="font-size:36px;font-weight:900;color:var(--g)">${hrs}h ${restMins}m</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">TIEMPO TOTAL</div>
+        </div>
+        <div style="text-align:center;flex:1;min-width:100px;background:var(--bg);border-radius:12px;padding:16px">
+          <div style="font-size:36px;font-weight:900;color:var(--v)">${appState.pomCount * 10}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">PTS GANADOS</div>
+        </div>
+      </div>`;
+  }
+
+  // HISTORIAL
+  const histEl = document.getElementById('statsHistory');
+  if(histEl) {
+    const level = LEVELS.filter(l=>appState.points>=l.pts).pop();
+    const badges = ['first_pomo','ten_pomos','first_habit','level2','level3'].filter(b => {
+      if(b==='first_pomo') return appState.pomCount>=1;
+      if(b==='ten_pomos') return appState.pomCount>=10;
+      if(b==='first_habit') return Object.values(appState.habitData).some(v=>v);
+      if(b==='level2') return appState.points>=50;
+      if(b==='level3') return appState.points>=150;
+      return false;
+    });
+    histEl.innerHTML = `
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:140px;background:var(--bg);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">NIVEL ACTUAL</div>
+          <div style="font-size:18px;font-weight:900;color:var(--r)">${level ? level.name : 'Principiante'}</div>
+        </div>
+        <div style="flex:1;min-width:140px;background:var(--bg);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">LOGROS</div>
+          <div style="font-size:18px;font-weight:900;color:var(--v)">${badges.length} / 8</div>
+        </div>
+        <div style="flex:1;min-width:140px;background:var(--bg);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">RACHA ACTUAL</div>
+          <div style="font-size:18px;font-weight:900;color:var(--g)">${appState.streak||0} días 🔥</div>
+        </div>
+      </div>`;
+  }
+}
+
+// ── MODO EMERGENCIA ──
+let breathActive = false;
+window.openEmergency = function() {
+  document.getElementById('emergency-overlay').style.display='flex';
+  // Animar pasos uno por uno
+  setTimeout(()=>document.getElementById('em1').classList.add('show'),200);
+  setTimeout(()=>document.getElementById('em2').classList.add('show'),500);
+  setTimeout(()=>document.getElementById('em3').classList.add('show'),800);
+}
+window.closeEmergency = function() {
+  document.getElementById('emergency-overlay').style.display='none';
+  document.getElementById('em1').classList.remove('show');
+  document.getElementById('em2').classList.remove('show');
+  document.getElementById('em3').classList.remove('show');
+  breathActive = false;
+  clearInterval(breathInterval);
+  document.getElementById('emBreath').classList.remove('breathing');
+  const txt = document.getElementById('breathText');
+  if(txt) txt.textContent = '';
+}
+window.toggleBreath = function() {
+  breathActive = !breathActive;
+  const el = document.getElementById('emBreath');
+  const txt = document.getElementById('breathText');
+  if(breathActive) {
+    el.classList.add('breathing');
+    let inhaling = true;
+    txt.textContent = 'Inhala...';
+    txt.style.color = 'var(--r)';
+    breathInterval = setInterval(()=>{
+      inhaling = !inhaling;
+      txt.textContent = inhaling ? 'Inhala...' : 'Exhala...';
+      txt.style.color = inhaling ? 'var(--r)' : 'var(--g)';
+    }, 4000);
+  } else {
+    el.classList.remove('breathing');
+    clearInterval(breathInterval);
+    txt.textContent = 'Toca el círculo para respirar';
+    txt.style.color = 'var(--muted)';
+  }
+}
+let breathInterval = null;
+
+// Mostrar botón emergencia cuando el usuario está logueado
+function showEmergencyBtn() {
+  document.getElementById('emergency-btn').style.display='flex';
+  document.getElementById('emergency-btn').style.alignItems='center';
+  document.getElementById('emergency-btn').style.justifyContent='center';
+}
+const FRASES_TDAH = [
+  "Tu cerebro está diseñado para pensar diferente — eso es un superpoder. 🧠✨",
+  "No necesitas ser productivo todo el tiempo. Descansar también es avanzar. 💙",
+  "Un pequeño paso hoy vale más que un plan perfecto que nunca empieza. 🚀",
+  "Tu valor no depende de cuánto produces. Eres suficiente tal como eres. 💜",
+  "El caos en tu mente no es un defecto — es creatividad buscando salida. 🌀",
+  "Hoy no tiene que ser perfecto. Solo tiene que ser tuyo. ✨",
+  "Los cerebros neurodivergentes cambiaron el mundo. El tuyo también puede. 🌍",
+  "Celebra cada pequeño logro — tu cerebro necesita esa dopamina. 🎉",
+  "No estás roto. Estás en proceso. Y eso es hermoso. 🌸",
+  "Tu forma de procesar el mundo es única. No la cambies — úsala. 💪",
+];
+
+window.obNext = function(step) {
+  for(let i=1;i<=4;i++) document.getElementById(`ob-step-${i}`).style.display='none';
+  document.getElementById(`ob-step-${step}`).style.display='block';
+  document.getElementById(`ob-step-${step}`).style.animation='fadeIn .4s ease';
+}
+
+window.obSaveName = function() {
+  const name = document.getElementById('obName').value.trim();
+  if(!name) { document.getElementById('obName').style.borderColor='#E27D60'; return; }
+  const nameInput = document.getElementById('userName');
+  if(nameInput) { nameInput.value = name; updateName(name); appState.inputs['userName'] = name; }
+  document.getElementById('obWelcomeTitle').textContent = `¡Bienvenida, ${name}! 🌟`;
+  scheduleSave();
+  obNext(3);
+}
+
+window.finishOnboarding = function() {
+  document.getElementById('onboarding-overlay').style.display='none';
+  appState.onboardingDone = true;
+  scheduleSave();
+  setTimeout(showFrase, 2000);
+}
+
+function checkOnboarding() {
+  if(!appState.onboardingDone) {
+    document.getElementById('onboarding-overlay').style.display='flex';
+  } else {
+    setTimeout(showFrase, 3000);
+  }
+}
+
+function showFrase() {
+  const frase = FRASES_TDAH[Math.floor(Math.random()*FRASES_TDAH.length)];
+  const el = document.getElementById('fraseText');
+  const overlay = document.getElementById('frase-overlay');
+  if(el && overlay) {
+    el.textContent = frase;
+    overlay.style.display = 'block';
+    setTimeout(()=>overlay.style.display='none', 6000);
+  }
+}
+</script>
+</body>
+</html>
